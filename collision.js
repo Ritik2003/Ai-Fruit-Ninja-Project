@@ -6,7 +6,10 @@ const CollisionSystem = {
     maxTrailLength: 15,
     minSwipeDistance: 12,
     minSwipeSpeed: 7,
+    MIN_SLASH_VELOCITY: 400, // px/sec
     isSwiping: false,
+    swipeVelocity: 0,
+
     lastX: 0,
     lastY: 0,
     hasLastPoint: false,
@@ -17,7 +20,8 @@ const CollisionSystem = {
         this.hasLastPoint = false;
         this.swipeAngle = 0;
     },
-    updateFingerPosition(x, y, visible) {
+    updateFingerPosition(x, y, visible, velocity) {
+        this.swipeVelocity = velocity || 0;
         if (!visible) {
             this.isSwiping = false;
             this.hasLastPoint = false;
@@ -33,8 +37,9 @@ const CollisionSystem = {
         const dx = x - this.lastX;
         const dy = y - this.lastY;
         const distance = Math.hypot(dx, dy);
-        if (distance >= this.minSwipeDistance) {
-            this.isSwiping = distance >= this.minSwipeDistance;
+        if (distance >= this.minSwipeDistance && this.swipeVelocity >= this.MIN_SLASH_VELOCITY) {
+            this.isSwiping = true;
+
             this.swipeAngle = Math.atan2(dy, dx);
             this.trail.push({ x, y, life: 1 });
             if (this.trail.length > this.maxTrailLength) {
