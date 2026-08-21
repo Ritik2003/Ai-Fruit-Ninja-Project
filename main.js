@@ -43,6 +43,24 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+        // Debug toggle: tap hint 5 times or press D
+    let debugTaps = 0;
+    const hintEl = document.querySelector('.hint');
+    if (hintEl) {
+        hintEl.addEventListener('click', () => {
+            debugTaps++;
+            if (debugTaps >= 5) {
+                Game.toggleDebug();
+                debugTaps = 0;
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'd' || e.key === 'D') {
+            Game.toggleDebug();
+        }
+    });
 
     console.log('AI Fruit Ninja initialized. Click Start Game to begin!');
 });
@@ -53,7 +71,7 @@ function setupGameplayTouchGuard() {
         if (e.cancelable) e.preventDefault();
     };
 
-    // passive:false is required on Android Chrome to stop pull-to-refresh/scroll
+    // passiv&e:false is required on Android Chrome to stop pull-to-refresh/scroll
     // while the player is swiping over the gameplay area.
     canvas.addEventListener('touchstart', prevent, { passive: false });
     canvas.addEventListener('touchmove', prevent, { passive: false });
