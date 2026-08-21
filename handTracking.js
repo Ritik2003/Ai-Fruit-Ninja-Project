@@ -32,13 +32,26 @@ const HandTracking = {
     detectionInterval: (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 2 : 1),
     frameCounter: 0,
 
+        async waitForMediaPipe() {
+        if (window.MediaPipeVision?.HandLandmarker) return;
+        return new Promise((resolve, reject) => {
+            const timeout = setTimeout(() => reject(new Error('MediaPipe load timeout')), 15000);
+            window.addEventListener('mediapipe-ready', () => {
+                clearTimeout(timeout);
+                resolve();
+            }, { once: true });
+        });
+    },
+
     async init() {
         try {
-            const { HandLandmarker, FilesetResolver } = window;
+            await this.waitForMediaPipe();
+            const { HandLandmarker, FilesetResolver } = window.MediaPipeVision;
 
             if (!HandLandmarker || !FilesetResolver) {
                 throw new Error('MediaPipe library load nahi hui. Internet/CDN connection check karo.');
             }
+
 
             const vision = await FilesetResolver.forVisionTasks(
                 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
@@ -100,14 +113,23 @@ const HandTracking = {
                 throw new Error('Is browser mein camera API support nahi hai. Latest Android Chrome use karo.');
             }
 
-            this.stream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    facingMode: 'user'
-                },
-                audio: false
-            });
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: { ideal: 'user' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+            } catch (firstError) {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+            }
+
 
             this.video = document.getElementById('webcam');
             this.video.setAttribute('playsinline', '');
@@ -117,11 +139,12 @@ const HandTracking = {
             this.video.muted = true;
             this.video.autoplay = true;
             this.video.srcObject = this.stream;
-
             await this.waitForVideoReady();
             await this.video.play();
+            this.video.classList.add('active');
 
             this.cameraCanvas = document.getElementById('cameraCanvas');
+
             this.cameraCtx = this.cameraCanvas.getContext('2d');
             this.cameraCanvas.width = 320;
             this.cameraCanvas.height = 240;
@@ -201,7 +224,14 @@ const HandTracking = {
         this.isFingerVisible = false;
         this.frameCounter = 0;
         this.stopStreamOnly();
+        if (this.video) this.video.classList.remove('active');
+        if (this.handLandmarker) {
+            this.handLandmarker.close();
+            this.handLandmarker = null;
+        }
+        this.isInitialized = false;
     },
+
 
     detect() {
         if (!this.isRunning || !this.handLandmarker || !this.video || this.video.readyState < 2) return;
