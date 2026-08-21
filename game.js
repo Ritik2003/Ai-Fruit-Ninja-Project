@@ -153,6 +153,9 @@ const Game = {
         }
 
         this.state = 'playing';
+        this.lastFpsTime = performance.now();
+        this.frameCount = 0;
+        this.debugMode = false;
         this.score = 0;
         this.lives = this.maxLives;
         this.combo = 0;
@@ -181,11 +184,14 @@ const Game = {
         HandTracking.detect();
 
         const fingerPos = HandTracking.getFingerPosition();
+        const velocity = HandTracking.getSwipeVelocity();
         CollisionSystem.updateFingerPosition(
             fingerPos.x,
             fingerPos.y,
-            HandTracking.isFingerVisible
+            HandTracking.isFingerVisible,
+            velocity
         );
+
 
         if (this.combo > 0) {
             this.comboTimer++;
@@ -260,11 +266,35 @@ const Game = {
 
         this.animationId = requestAnimationFrame((t) => this.gameLoop(t));
     },
+    
+    this.updateDebug();
+     updateDebug() {
+        if (!this.debugMode) return;
+        document.getElementById('debugFps').textContent = this.fps || 0;
+        document.getElementById('debugHand').textContent = HandTracking.isFingerVisible ? 'YES' : 'NO';
+        document.getElementById('debugX').textContent = Math.round(HandTracking.fingerX || 0);
+        document.getElementById('debugY').textContent = Math.round(HandTracking.fingerY || 0);
+        document.getElementById('debugVel').textContent = Math.round(HandTracking.getSwipeVelocity());
+        document.getElementById('debugMp').textContent = HandTracking.isInitialized ? (HandTracking.delegateUsed || 'OK') : 'FAIL';
+        document.getElementById('debugCam').textContent = HandTracking.isRunning ? 'ON' : 'OFF';
+    },
+
+    toggleDebug() {
+        this.debugMode = !this.debugMode;
+        const panel = document.getElementById('debugPanel');
+        if (panel) panel.classList.toggle('hidden', !this.debugMode);
+        console.log('Debug:', this.debugMode ? 'ON' : 'OFF');
+    },
+
 
     render() {
         const ctx = this.ctx;
 
-        ctx.fillStyle = this.bgGradient;
+        // Clear — camera is visible behind canvas via CSS
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Subtle overlay so fruits pop against real world
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
         ctx.fillRect(0, 0, this.width, this.height);
 
         this.drawBackground(ctx);
@@ -276,6 +306,7 @@ const Game = {
             this.drawFingerCursor(ctx);
         }
     },
+
 
     drawBackground(ctx) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.02)';
