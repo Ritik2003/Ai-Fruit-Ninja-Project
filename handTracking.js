@@ -3,6 +3,11 @@
  * Android-safe version with GPU -> CPU delegate fallback, camera error messages,
  * inline video flags, and alternate-frame detection for low-end phones.
  */
+             /**
+ * Hand Tracking Module using MediaPipe Tasks Vision
+ * Android-safe version with GPU -> CPU delegate fallback, camera error messages,
+ * inline video flags, and alternate-frame detection for low-end phones.
+ */
 const HandTracking = {
     handLandmarker: null,
     video: null,
@@ -32,10 +37,15 @@ const HandTracking = {
     detectionInterval: (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? 2 : 1),
     frameCounter: 0,
 
-        async waitForMediaPipe() {
+    async waitForMediaPipe() {
         if (window.MediaPipeVision?.HandLandmarker) return;
+
         return new Promise((resolve, reject) => {
-            const timeout = setTimeout(() => reject(new Error('MediaPipe load timeout')), 15000);
+            const timeout = setTimeout(
+                () => reject(new Error('MediaPipe load timeout')),
+                15000
+            );
+
             window.addEventListener('mediapipe-ready', () => {
                 clearTimeout(timeout);
                 resolve();
@@ -43,30 +53,15 @@ const HandTracking = {
         });
     },
 
-async waitForMediaPipe() {
-    if (window.MediaPipeVision?.HandLandmarker) return;
+    async init() {
+        try {
+            await this.waitForMediaPipe();
 
-    return new Promise((resolve, reject) => {
-        const timeout = setTimeout(
-            () => reject(new Error('MediaPipe load timeout')),
-            15000
-        );
+            const { HandLandmarker, FilesetResolver } = window.MediaPipeVision;
 
-        window.addEventListener('mediapipe-ready', () => {
-            clearTimeout(timeout);
-            resolve();
-        }, { once: true });
-    });
-},
-
-async init() {
-    try {
-        await this.waitForMediaPipe();
-
-        const { HandLandmarker, FilesetResolver } = window.MediaPipeVision;
-
-        if (!HandLandmarker || !FilesetResolver) {
-
+            if (!HandLandmarker || !FilesetResolver) {
+                throw new Error('MediaPipe library load nahi hui. Internet/CDN connection check karo.');
+            }
 
             const vision = await FilesetResolver.forVisionTasks(
                 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
@@ -145,6 +140,7 @@ async init() {
                 });
             }
 
+            this.stream = stream;
 
             this.video = document.getElementById('webcam');
             this.video.setAttribute('playsinline', '');
@@ -154,12 +150,12 @@ async init() {
             this.video.muted = true;
             this.video.autoplay = true;
             this.video.srcObject = this.stream;
+
             await this.waitForVideoReady();
             await this.video.play();
             this.video.classList.add('active');
 
             this.cameraCanvas = document.getElementById('cameraCanvas');
-
             this.cameraCtx = this.cameraCanvas.getContext('2d');
             this.cameraCanvas.width = 320;
             this.cameraCanvas.height = 240;
@@ -246,7 +242,6 @@ async init() {
         }
         this.isInitialized = false;
     },
-
 
     detect() {
         if (!this.isRunning || !this.handLandmarker || !this.video || this.video.readyState < 2) return;
@@ -369,3 +364,6 @@ async init() {
         }
     }
 };
+   
+            
+        
