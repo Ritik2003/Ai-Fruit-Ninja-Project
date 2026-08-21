@@ -38,7 +38,18 @@ canvas,
 }
 
 #webcam {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    transform: scaleX(-1);
+    z-index: 0;
     display: none;
+}
+
+#webcam.active {
+    display: block;
 }
 
 #gameCanvas {
@@ -47,11 +58,11 @@ canvas,
     width: 100vw;
     height: 100vh;
     display: block;
-    background: #0f3460;
-    z-index: 0;
+    z-index: 1;
+    pointer-events: none;
 }
 
-.hidden {
+pos.hidden {
     display: none !important;
 }
 
@@ -354,3 +365,21 @@ h2 {
         top: calc(58px + env(safe-area-inset-top));
     }
 }
+
+.debug-panel {
+    position: fixed;
+    top: calc(70px + env(safe-area-inset-top));
+    left: 10px;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: #4ade80;
+    line-height: 1.6;
+    pointer-events: none;
+    min-width: 140px;
+}
+
