@@ -1,13 +1,17 @@
 /**
  * Juice, sparkle, and explosion particles
  */
-const ParticleSystem = {
+ const ParticleSystem = {
     particles: [],
+    MAX_PARTICLES: 250,
     clear() {
         this.particles = [];
     },
-    spawnJuice(x, y, color = '#f97316') {
-        for (let i = 0; i < 18; i++) {
+        spawnJuice(x, y, color = '#f97316') {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
+        const count = Math.min(18, this.MAX_PARTICLES - this.particles.length);
+        for (let i = 0; i < count; i++) {
+
             const angle = Utils.random(0, Math.PI * 2);
             const speed = Utils.random(90, 320);
             this.particles.push({
@@ -25,9 +29,12 @@ const ParticleSystem = {
             this.particles[this.particles.length - 1].maxLife = this.particles[this.particles.length - 1].life;
         }
     },
-    spawnExplosion(x, y) {
+        spawnExplosion(x, y) {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
         const colors = ['#f97316', '#ef4444', '#facc15', '#111827'];
-        for (let i = 0; i < 42; i++) {
+        const count = Math.min(42, this.MAX_PARTICLES - this.particles.length);
+        for (let i = 0; i < count; i++) {
+
             const angle = Utils.random(0, Math.PI * 2);
             const speed = Utils.random(140, 520);
             this.particles.push({
@@ -46,8 +53,10 @@ const ParticleSystem = {
         }
     },
     spawnComboSparkles(x, y, combo = 2) {
-        const count = Math.min(10 + combo * 2, 34);
+        if (this.particles.length >= this.MAX_PARTICLES) return;
+        const count = Math.min(10 + combo * 2, 34, this.MAX_PARTICLES - this.particles.length);
         for (let i = 0; i < count; i++) {
+
             const angle = Utils.random(0, Math.PI * 2);
             const speed = Utils.random(70, 240);
             this.particles.push({
