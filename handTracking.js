@@ -43,14 +43,29 @@ const HandTracking = {
         });
     },
 
-    async init() {
-        try {
-            await this.waitForMediaPipe();
-            const { HandLandmarker, FilesetResolver } = window.MediaPipeVision;
+async waitForMediaPipe() {
+    if (window.MediaPipeVision?.HandLandmarker) return;
 
-            if (!HandLandmarker || !FilesetResolver) {
-                throw new Error('MediaPipe library load nahi hui. Internet/CDN connection check karo.');
-            }
+    return new Promise((resolve, reject) => {
+        const timeout = setTimeout(
+            () => reject(new Error('MediaPipe load timeout')),
+            15000
+        );
+
+        window.addEventListener('mediapipe-ready', () => {
+            clearTimeout(timeout);
+            resolve();
+        }, { once: true });
+    });
+},
+
+async init() {
+    try {
+        await this.waitForMediaPipe();
+
+        const { HandLandmarker, FilesetResolver } = window.MediaPipeVision;
+
+        if (!HandLandmarker || !FilesetResolver) {
 
 
             const vision = await FilesetResolver.forVisionTasks(
